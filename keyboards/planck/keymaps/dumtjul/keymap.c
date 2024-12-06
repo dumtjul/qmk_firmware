@@ -26,11 +26,6 @@ enum planck_layers {
   _FN
 };
 
-// Add custom keycodes like Apple's globe key
-enum custom_keycodes {
-  osGLB = SAFE_RANGE,
-};
-
 // Shortcuts layer 0 and 1
 #define entFN   LT(_FN,KC_ENT)
 #define spcNUM  LT(_NUM,KC_SPC)
@@ -38,6 +33,7 @@ enum custom_keycodes {
 #define escHS   LT(0,KC_ESC)
 
 // Shortcuts layer 2
+#define osGLB   LT(0,KC_NO)
 #define osCTL   OSM(MOD_LCTL)
 #define osALT   OSM(MOD_LALT)
 #define osGUI   OSM(MOD_LGUI)
@@ -67,8 +63,8 @@ const uint16_t PROGMEM keymaps[][MATRIX_ROWS][MATRIX_COLS] = {
 
   [_FN] = LAYOUT_planck_grid(
     KC_BRID, KC_BRIU, KC_LPAD, sptl   , MS_BTN1, XXXXXXX, XXXXXXX, KC_MRWD, KC_MPLY, KC_MFFD, KC_VOLD, KC_VOLU,
-    KC_F1  , KC_F2  , KC_F3  , KC_F4  , XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, KC_F5  , KC_F6  , KC_F7  , KC_F8  ,
-    KC_F9  , KC_F10 , KC_F11 , KC_F12 , XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, KC_F13 , KC_F14 , KC_F15 , KC_F16 ,
+    KC_F1  , KC_F2  , KC_F3  , KC_F4  , KC_F5  , XXXXXXX, XXXXXXX, KC_F6  , KC_F7  , KC_F8  , KC_F9  , KC_F10 ,
+    KC_F11 , KC_F12 , KC_F13 , KC_F14 , KC_F15 , XXXXXXX, XXXXXXX, KC_F16 , KC_F17 , KC_F18 , KC_F19 , KC_F20 ,
     XXXXXXX, XXXXXXX, XXXXXXX, _______, XXXXXXX, XXXXXXX, XXXXXXX, KC_LSFT, hs     , XXXXXXX, XXXXXXX, XXXXXXX
   )
 
@@ -85,19 +81,21 @@ const uint16_t PROGMEM keymaps[][MATRIX_ROWS][MATRIX_COLS] = {
 
  */
 
-static uint8_t glb_tracker;
+static uint8_t glb_held;
 
 bool process_record_user(uint16_t keycode, keyrecord_t *record) {
   switch (keycode) {
 
   case osGLB:
-    if (record->event.pressed && !glb_tracker) {
+    if (record->tap.count && record->event.pressed) {
       host_consumer_send(0x029D);
-      glb_tracker++;
+      host_consumer_send(0);
+    } else if (record->event.pressed && glb_held) {
+      host_consumer_send(0);
+      glb_held--;
     } else if (!record->event.pressed) {
       host_consumer_send(0x029D);
-    } else {
-      host_consumer_send(0);
+      glb_held++;
     }
     return false;
 
@@ -127,8 +125,8 @@ bool process_record_user(uint16_t keycode, keyrecord_t *record) {
 
 void post_process_record_user(uint16_t keycode, keyrecord_t *record) {
 
-  if (record->event.pressed && glb_tracker && keycode != osGLB) {
-    glb_tracker--;
+  if (record->event.pressed && glb_held && keycode != osGLB) {
+    glb_held--;
     host_consumer_send(0);
   }
 
