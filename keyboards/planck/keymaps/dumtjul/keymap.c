@@ -110,26 +110,26 @@ bool process_record_user(uint16_t keycode, keyrecord_t *record) {
   case osGLB:
 
     // TAP
-    if (record->tap.count && record->event.pressed && latent_glb) {
-      latent_glb--;
-      tapped_glb++;
-    } else if (record->tap.count && record->event.pressed) {
+    if (record->tap.count && record->event.pressed && !latent_glb) {
       host_consumer_send(0);
       host_consumer_send(0x029D);
+      tapped_glb++;
+    } else if (record->tap.count && record->event.pressed) {
+      latent_glb--;
       tapped_glb++;
 
     // HOLD
-    } else if (record->event.pressed && latent_glb) {
+    } else if (record->event.pressed && !latent_glb) {
       host_consumer_send(0);
       host_consumer_send(0x029D);
       host_consumer_send(0);
-      host_consumer_send(0x029D);
-      host_consumer_send(0);
-      latent_glb--;
     } else if (record->event.pressed) {
       host_consumer_send(0);
       host_consumer_send(0x029D);
       host_consumer_send(0);
+      host_consumer_send(0x029D);
+      host_consumer_send(0);
+      latent_glb--;
 
     // RELEASE
     } else if (!record->event.pressed && tapped_glb) {
