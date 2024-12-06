@@ -26,11 +26,6 @@ enum planck_layers {
   _FN
 };
 
-// Add custom keycodes like Apple's globe key
-enum custom_keycodes {
-  osGLB = SAFE_RANGE,
-};
-
 // Shortcuts layer 0 and 1
 #define entFN   LT(_FN,KC_ENT)
 #define spcNUM  LT(_NUM,KC_SPC)
@@ -86,23 +81,32 @@ const uint16_t PROGMEM keymaps[][MATRIX_ROWS][MATRIX_COLS] = {
 
  */
 
-static uint8_t glb_tapped;
+static uint8_t tapped_glb;
+static uint8_t latent_glb;
 
 bool process_record_user(uint16_t keycode, keyrecord_t *record) {
   switch (keycode) {
 
   case osGLB:
-    if (record->tap.count && record->event.pressed) {
+    if (record->tap.count && record->event.pressed && latent_glb) {
+      host_consumer_send(0);
       host_consumer_send(0x029D);
       host_consumer_send(0);
-      glb_tapped++;
+    } else if (record->tap.count && record->event.pressed) {
+      host_consumer_send(0x029D);
+      tapped_glb++;
+    } else if (record->event.pressed && latent_glb) {
+      host_consumer_send(0);
     } else if (record->event.pressed) {
       host_consumer_send(0x029D);
-    } else if (!record->event.pressed && !glb_tapped) {
       host_consumer_send(0);
-    } else {
+    } else if (!record->event.pressed && latent_glb) {
+      latent_glb--;
       host_consumer_send(0x029D);
-      glb_tapped++;
+      host_consumer_send(0);
+    } else if (!record->event.pressed && tapped_glb) {
+      tapped_glb--;
+      latent_glb++;
     }
     return false;
 
@@ -132,8 +136,8 @@ bool process_record_user(uint16_t keycode, keyrecord_t *record) {
 
 void post_process_record_user(uint16_t keycode, keyrecord_t *record) {
 
-  if (record->event.pressed && glb_tapped && keycode != osGLB) {
-    glb_tapped--;
+  if (record->event.pressed && latent_glb && keycode != osGLB && keycode != osCTL && keycode != osALT && keycode != osGUI && keycode != spcNUM) {
+    latent_glb--;
     host_consumer_send(0);
   }
 
