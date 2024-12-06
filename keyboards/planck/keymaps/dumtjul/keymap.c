@@ -87,29 +87,6 @@ static uint8_t latent_glb;
 bool process_record_user(uint16_t keycode, keyrecord_t *record) {
   switch (keycode) {
 
-  case osGLB:
-    if (record->tap.count && record->event.pressed && latent_glb) {
-      host_consumer_send(0);
-      host_consumer_send(0x029D);
-      host_consumer_send(0);
-    } else if (record->tap.count && record->event.pressed) {
-      host_consumer_send(0x029D);
-      tapped_glb++;
-    } else if (record->event.pressed && latent_glb) {
-      host_consumer_send(0);
-    } else if (record->event.pressed) {
-      host_consumer_send(0x029D);
-      host_consumer_send(0);
-    } else if (!record->event.pressed && latent_glb) {
-      latent_glb--;
-      host_consumer_send(0x029D);
-      host_consumer_send(0);
-    } else if (!record->event.pressed && tapped_glb) {
-      tapped_glb--;
-      latent_glb++;
-    }
-    return false;
-
   case escHS:
     if (record->tap.count && record->event.pressed) {
       tap_code16(KC_ESC);
@@ -130,13 +107,47 @@ bool process_record_user(uint16_t keycode, keyrecord_t *record) {
     }
     return false;
 
+  case osGLB:
+
+    // TAP
+    if (record->tap.count && record->event.pressed && !latent_glb) {
+      host_consumer_send(0x029D);
+      tapped_glb++;
+    } else if (record->tap.count && record->event.pressed) {
+      //latent_glb--;
+      //tapped_glb++;
+
+    // HOLD
+    } else if (record->event.pressed && !latent_glb) {
+      host_consumer_send(0);
+      host_consumer_send(0x029D);
+      host_consumer_send(0);
+    } else if (record->event.pressed) {
+      host_consumer_send(0x029D);
+      host_consumer_send(0);
+      latent_glb--;
+
+    // RELEASE
+    } else if (!record->event.pressed && tapped_glb) {
+      tapped_glb--;
+      latent_glb++;
+
+    // } else if (!record->event.pressed && latent_glb) {
+      // host_consumer_send(0);
+      // latent_glb--;
+      // host_consumer_send(0x029D);
+      // host_consumer_send(0);
+
+    }
+    return false;
   }
   return true;
 }
 
 void post_process_record_user(uint16_t keycode, keyrecord_t *record) {
-
-  if (record->event.pressed && latent_glb && keycode != osGLB && keycode != osCTL && keycode != osALT && keycode != osGUI && keycode != spcNUM) {
+//
+  //if (record->event.pressed && latent_glb && keycode != osGLB && keycode != osCTL && keycode != osALT && keycode != osGUI && keycode != spcNUM) {
+  if (record->event.pressed && latent_glb && keycode != osGLB) {
     latent_glb--;
     host_consumer_send(0);
   }
