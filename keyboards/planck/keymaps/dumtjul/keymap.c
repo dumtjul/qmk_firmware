@@ -26,6 +26,11 @@ enum planck_layers {
   _FN
 };
 
+// Add custom keycodes like Apple's globe key
+enum custom_keycodes {
+  osGLB = SAFE_RANGE,
+};
+
 // Shortcuts layer 0 and 1
 #define entFN   LT(_FN,KC_ENT)
 #define spcNUM  LT(_NUM,KC_SPC)
@@ -33,7 +38,7 @@ enum planck_layers {
 #define escHS   LT(0,KC_ESC)
 
 // Shortcuts layer 2
-#define osGLB   LT(0,KC_NO)
+//#define osGLB   LT(0,KC_NO)
 #define osCTL   OSM(MOD_LCTL)
 #define osALT   OSM(MOD_LALT)
 #define osGUI   OSM(MOD_LGUI)
@@ -81,8 +86,13 @@ const uint16_t PROGMEM keymaps[][MATRIX_ROWS][MATRIX_COLS] = {
 
  */
 
-static uint8_t tapped_glb;
-static uint8_t latent_glb;
+// Variables
+bool glb_down = false;
+bool glb_tapping_term = false; // add this near the beginning of keymap.c
+bool glb_subsequent_press = false;
+bool glb_sent = false;
+//bool glb_dictate;
+uint16_t glb_timer = 0;     // we will be using them soon.
 
 bool process_record_user(uint16_t keycode, keyrecord_t *record) {
   switch (keycode) {
@@ -95,7 +105,7 @@ bool process_record_user(uint16_t keycode, keyrecord_t *record) {
     } else {
       unregister_code16(KC_F20);
     }
-    return false;
+    break;
 
   case lockHS:
     if (record->tap.count && record->event.pressed) {
@@ -105,49 +115,137 @@ bool process_record_user(uint16_t keycode, keyrecord_t *record) {
     } else {
       unregister_code16(KC_F20);
     }
-    return false;
+    break;
 
   case osGLB:
-
-    // TAP
-    if (record->tap.count && record->event.pressed && !latent_glb) {
-      host_consumer_send(0);
-      host_consumer_send(0x029D);
-      tapped_glb++;
-    } else if (record->tap.count && record->event.pressed) {
-      latent_glb--;
-      tapped_glb++;
-
-    // HOLD
-    } else if (record->event.pressed && !latent_glb) {
-      host_consumer_send(0);
-      host_consumer_send(0x029D);
-      host_consumer_send(0);
-    } else if (record->event.pressed) {
-      host_consumer_send(0);
-      host_consumer_send(0x029D);
-      host_consumer_send(0);
-      host_consumer_send(0x029D);
-      host_consumer_send(0);
-      latent_glb--;
-
-    // RELEASE
-    } else if (!record->event.pressed && tapped_glb) {
-      tapped_glb--;
-      latent_glb++;
-
+    if (record->event.pressed) {
+      glb_down = true;
+      if (glb_tapping_term) {
+        //glb_tapping_term = false;
+        glb_subsequent_press = true;
+      }
+      glb_timer = timer_read();
+      glb_tapping_term = true;
+      if (glb_sent) {
+      } else {
+        host_consumer_send(0x029D);
+        glb_sent = true;
+      }
+    } else {
+      glb_down = false;
+      //if (glb_sent) {
+      //  host_consumer_send(0);
+      //  glb_sent = false;
+      //}
+      if (glb_tapping_term) {
+      } else {
+        //if (glb_sent) {
+        //} else {
+        //  host_consumer_send(0x029D);
+        //}
+        //host_consumer_send(0);
+        //glb_sent = false;
+        //if (glb_sent) {
+        //  host_consumer_send(0);
+        //  glb_sent = false;
+        //}
+        //host_consumer_send(0x029D);
+        //host_consumer_send(0);
+        //glb_sent = false;
+      }
     }
-    return false;
+    break;
+
   }
   return true;
 }
 
 void post_process_record_user(uint16_t keycode, keyrecord_t *record) {
-//
-  //if (record->event.pressed && latent_glb && keycode != osGLB && keycode != osCTL && keycode != osALT && keycode != osGUI && keycode != spcNUM) {
-  if (record->event.pressed && latent_glb && keycode != osGLB) {
-    latent_glb--;
-    host_consumer_send(0);
+  //if (record->event.pressed && glb_currently_latent && keycode != osGLB) {
+  if (record->event.pressed && keycode != osGLB) {
+    if (glb_sent && !glb_down) {
+      host_consumer_send(0);
+      glb_sent = false;
+    } else {
+    }
   }
 
 }
+
+void matrix_scan_user(void) { // The very important timer.
+  if (glb_tapping_term) {
+    //if (timer_elapsed(glb_timer) > 500) {
+    if (timer_elapsed(glb_timer) > 1.5 * TAPPING_TERM) {
+      glb_tapping_term = false;
+      if (glb_down) {
+        if (glb_sent) {
+          host_consumer_send(0);
+        } else {
+        }
+        host_consumer_send(0x029D);
+        host_consumer_send(0);
+        if (glb_subsequent_press) {
+          host_consumer_send(0x029D);
+          host_consumer_send(0);
+        }
+        glb_sent = false;
+      }
+      glb_subsequent_press = false;
+    }
+  }
+}
+
+
+  //case osGLB:
+    //if (record->event.pressed) {    // PRESS
+    //  host_consumer_send(0);
+    //  if (glb_tapping_term) {
+    //    glb_tapping_term--;
+    //    glb_double_pressed++;
+    //  } else {
+    //    glb_tapping_term++;
+    //  }
+    //  if (record->tap.count) {          // <TERM
+    //  } else {                          // >TERM
+    //    if (glb_double_pressed) {
+    //      glb_double_pressed--;
+    //      glb_dictate++;
+    //      host_consumer_send(0x029D);
+    //      host_consumer_send(0);
+    //      host_consumer_send(0x029D);
+    //    } else {
+    //      host_consumer_send(0x029D);
+    //      host_consumer_send(0);
+    //    }
+    //  }
+    //// POST
+    //} else {                        // RELEASE
+    //  if (glb_dictate) {
+    //    glb_dictate--;
+    //    host_consumer_send(0);
+    //  }
+    //  if (glb_tapping_term) {
+    //    glb_currently_latent++;
+    //    host_consumer_send(0x029D);
+    //  }
+    //  if (record->tap.count) {          // <TERM
+    //  } else {                          // >TERM
+    //  }
+    //}
+    //break;
+    //
+
+  //case KC_A ... KC_EXSL:
+  //  if (record->event.pressed) {
+  //    if (glb_currently_latent) {
+  //      host_consumer_send(0x029D);
+  //    }
+  //    register_code(keycode);
+  //  } else {
+  //    unregister_code(keycode);
+  //    if (glb_currently_latent) {
+  //      glb_currently_latent--;
+  //      host_consumer_send(0);
+  //    }
+  //  }
+  //  break;
