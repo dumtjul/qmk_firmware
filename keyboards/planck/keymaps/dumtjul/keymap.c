@@ -12,240 +12,178 @@
  *
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ * In aanvulling op de andere Engram-wijzigingen:
+ *
+ *    Dead-Option interception:
+ *      - Option-E; Option-U enz. onderscheppen en verplaatsen naar de posities waar ik ze verwacht: `; "; enz.
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
  */
-
-/* On Dvorak: maybe switch U and I, D and H, and L and M */
 
 #include QMK_KEYBOARD_H
 #include "keymap_us_extended.h"
+#include "flow.h"
 
 // Define layer names for clarity
 enum planck_layers {
-  _DVORAK,
+  _DVORAK,  // On Dvorak: maybe switch U and I, D and H, and L and M
   _NUM,
+  _SYM,
   _FN
 };
 
-// Add custom keycodes like Apple's globe key
-enum custom_keycodes {
-  osGLB = SAFE_RANGE,
-};
-
 // Shortcuts layer 0 and 1
-#define entFN   LT(_FN,KC_ENT)
-#define spcNUM  LT(_NUM,KC_SPC)
-#define bspSFT  LSFT_T(KC_BSPC)
-#define escHS   LT(0,KC_ESC)
-
-// Shortcuts layer 2
-//#define osGLB   LT(0,KC_NO)
-#define osCTL   OSM(MOD_LCTL)
-#define osALT   OSM(MOD_LALT)
-#define osGUI   OSM(MOD_LGUI)
-#define delSFT  LSFT_T(KC_DEL)
-#define lockHS  LT(0,C(G(KC_Q)))
-
-// Shortcuts layer 3
-#define sptl    G(KC_SPC)
+#define escSYM  LT(_SYM,KC_ESC)
+#define bspNUM  LT(_NUM,KC_BSPC)
+#define spcGLB  LT(0,KC_SPC)
+#define entHS   LT(0,KC_ENT)
+//#define glb     LT(0,KC_NO)
+#define glb     KC_NO
 #define hs      KC_F20
+#define btab    S(KC_TAB)
+#define lock    C(G(KC_Q))
+#define fn      MO(_FN)
+
+// Config for flow keys
+const uint16_t flow_config[FLOW_COUNT][2] = {
+  {bspNUM, KC_LALT},
+  {bspNUM, KC_LGUI},
+  {bspNUM, KC_LCTL},
+  {bspNUM, KC_LSFT},
+};
 
 // KEYMAP
 const uint16_t PROGMEM keymaps[][MATRIX_ROWS][MATRIX_COLS] = {
 
   [_DVORAK] = LAYOUT_planck_grid(
-    KC_QUOT, KC_COMM, KC_DOT , KC_P   , KC_Y   , XXXXXXX, XXXXXXX, KC_F   , KC_G   , KC_C   , KC_R   , KC_L   ,
-    KC_A   , KC_O   , KC_E   , KC_U   , KC_I   , XXXXXXX, XXXXXXX, KC_D   , KC_H   , KC_T   , KC_N   , KC_S   ,
-    KC_SCLN, KC_Q   , KC_J   , KC_K   , KC_X   , XXXXXXX, XXXXXXX, KC_B   , KC_M   , KC_W   , KC_V   , KC_Z   ,
-    XXXXXXX, XXXXXXX, XXXXXXX, entFN  , spcNUM , XXXXXXX, XXXXXXX, bspSFT , escHS  , XXXXXXX, XXXXXXX, XXXXXXX
+    KC_SCLN, KC_COMM, KC_DOT , KC_P   , KC_Y   , XXXXXXX, XXXXXXX, KC_F   , KC_G   , KC_R   , KC_L   , KC_V   ,
+    KC_O   , KC_I   , KC_E   , KC_A   , KC_U   , XXXXXXX, XXXXXXX, KC_C   , KC_D   , KC_N   , KC_T   , KC_S   ,
+    KC_QUOT, KC_Q   , KC_J   , KC_H   , KC_X   , XXXXXXX, XXXXXXX, KC_B   , KC_W   , KC_M   , KC_V   , KC_Z   ,
+    XXXXXXX, XXXXXXX, XXXXXXX, escSYM , bspNUM , XXXXXXX, XXXXXXX, spcGLB , entHS  , XXXXXXX, XXXXXXX, XXXXXXX
   ),
 
   [_NUM] = LAYOUT_planck_grid(
     KC_1   , KC_2   , KC_3   , KC_4   , KC_5   , XXXXXXX, XXXXXXX, KC_6   , KC_7   , KC_8   , KC_9   , KC_0   ,
-    osGLB  , osCTL  , osALT  , osGUI  , XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, KC_LEFT, KC_DOWN, KC_UP  , KC_RGHT,
+    KC_LCTL, KC_LALT, KC_LGUI, KC_LSFT, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, KC_LEFT, KC_DOWN, KC_UP  , KC_RGHT,
     KC_MINS, KC_EQL , KC_SLSH, KC_BSLS, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, KC_TAB , US_GRV , KC_LBRC, KC_RBRC,
-    XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, _______, XXXXXXX, XXXXXXX, delSFT , lockHS , XXXXXXX, XXXXXXX, XXXXXXX
+    XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, _______, XXXXXXX, XXXXXXX, glb    , hs     , XXXXXXX, XXXXXXX, XXXXXXX
+  ),
+
+  [_SYM] = LAYOUT_planck_grid(
+    KC_EXLM, KC_AT  , KC_HASH, KC_DLR , KC_PERC, XXXXXXX, XXXXXXX, KC_CIRC, KC_AMPR, KC_ASTR, KC_LPRN, KC_RPRN,
+    KC_MRWD, KC_MPLY, KC_MFFD, CW_TOGG, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, KC_BRID, KC_BRIU, KC_VOLD, KC_VOLU,
+    KC_UNDS, KC_PLUS, KC_QUES, KC_PIPE, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, btab   , KC_TILD, KC_LCBR, KC_RCBR,
+    XXXXXXX, XXXXXXX, XXXXXXX, _______, XXXXXXX, XXXXXXX, XXXXXXX, lock   , fn     , XXXXXXX, XXXXXXX, XXXXXXX
   ),
 
   [_FN] = LAYOUT_planck_grid(
-    KC_BRID, KC_BRIU, KC_LPAD, sptl   , MS_BTN1, XXXXXXX, XXXXXXX, KC_MRWD, KC_MPLY, KC_MFFD, KC_VOLD, KC_VOLU,
     KC_F1  , KC_F2  , KC_F3  , KC_F4  , KC_F5  , XXXXXXX, XXXXXXX, KC_F6  , KC_F7  , KC_F8  , KC_F9  , KC_F10 ,
     KC_F11 , KC_F12 , KC_F13 , KC_F14 , KC_F15 , XXXXXXX, XXXXXXX, KC_F16 , KC_F17 , KC_F18 , KC_F19 , KC_F20 ,
-    XXXXXXX, XXXXXXX, XXXXXXX, _______, XXXXXXX, XXXXXXX, XXXXXXX, KC_LSFT, hs     , XXXXXXX, XXXXXXX, XXXXXXX
+    XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX,
+    XXXXXXX, XXXXXXX, XXXXXXX, _______, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, _______, XXXXXXX, XXXXXXX, XXXXXXX
   )
 
 };
 
 /* Apple keycodes
- * Globe                    0x029D    AC_NEXT_KEYBOARD_LAYOUT_SELECT
- * Spotlight                0x0221    AC_SEARCH
- * Grave Accent and Tilde   0x0035
-
-  case spot:
-    host_consumer_send(record->event.pressed ? 0x0221 : 0);
-    return false;
-
+ *
+ * 0x01AE   AL Keyboard Layout          Toggle Onscreen Keyboard
+ * 0x029D   AC Keyboard Layout Select   Globe Key                   AC_NEXT_KEYBOARD_LAYOUT_SELECT
+ * 0x0221   AC Search                   Spotlight
+ * 0x0030   Power                       Lock
+ * 0x009B   System Do Not Disturb       Toggle Focus Mode           host_system_send()
+ *
+ * case sptl:
+ *   host_consumer_send(record->event.pressed ? 0x0221 : 0);
+ *   return false;
+ *
  */
 
-// Variables
 bool glb_down = false;
-bool glb_tapping_term = false; // add this near the beginning of keymap.c
-bool glb_subsequent_press = false;
+bool glb_double_tapped = false;
 bool glb_sent = false;
-//bool glb_dictate;
-uint16_t glb_timer = 0;     // we will be using them soon.
+bool glb_timer_running = false;
+uint16_t glb_timer = 0;
 
 bool process_record_user(uint16_t keycode, keyrecord_t *record) {
+
+  if (!update_flow(keycode, record->event.pressed, record->event.key)) return false;
+
+  if (glb_down && record->event.pressed) {
+    host_consumer_send(0x029D);
+    glb_sent = true;
+  }
+
   switch (keycode) {
 
-  case escHS:
-    if (record->tap.count && record->event.pressed) {
-      tap_code16(KC_ESC);
-    } else if (record->event.pressed) {
-      register_code16(KC_F20);
-    } else {
-      unregister_code16(KC_F20);
-    }
-    break;
-
-  case lockHS:
-    if (record->tap.count && record->event.pressed) {
-      tap_code16(C(G(KC_Q)));
-    } else if (record->event.pressed) {
-      register_code16(KC_F20);
-    } else {
-      unregister_code16(KC_F20);
-    }
-    break;
-
-  case osGLB:
-    if (record->event.pressed) {
-      glb_down = true;
-      if (glb_tapping_term) {
-        //glb_tapping_term = false;
-        glb_subsequent_press = true;
+    case bspNUM:  //LT(_NUM,KC_BSPC)
+      if (glb_down && record->event.pressed) {
+        tap_code16(KC_DEL);
+        return false;
       }
-      glb_timer = timer_read();
-      glb_tapping_term = true;
-      if (glb_sent) {
-      } else {
+      break;
+
+    case glb:  //KC_NO
+      if (record->event.pressed) {
+        host_consumer_send(0x029D);
+        host_consumer_send(0);
         host_consumer_send(0x029D);
         glb_sent = true;
-      }
-    } else {
-      glb_down = false;
-      //if (glb_sent) {
-      //  host_consumer_send(0);
-      //  glb_sent = false;
-      //}
-      if (glb_tapping_term) {
       } else {
-        //if (glb_sent) {
-        //} else {
-        //  host_consumer_send(0x029D);
-        //}
-        //host_consumer_send(0);
-        //glb_sent = false;
-        //if (glb_sent) {
-        //  host_consumer_send(0);
-        //  glb_sent = false;
-        //}
-        //host_consumer_send(0x029D);
-        //host_consumer_send(0);
-        //glb_sent = false;
+        host_consumer_send(0);
+        glb_sent = false;
       }
-    }
-    break;
+      break;
 
-  }
+    case spcGLB:  //LT(0,KC_SPC)
+      if (record->tap.count) {
+      } else {
+        if (record->event.pressed) {
+          glb_down = true;
+        } else {
+          glb_down = false;
+          if (glb_sent) {
+            host_consumer_send(0);
+            glb_sent = false;
+          }
+        }
+      }
+      break;
+
+    case entHS:  //LT(0,KC_ENT)
+      if (record->tap.count) {
+      } else {
+        if (record->event.pressed) {
+          register_code16(KC_F20);
+        } else {
+          unregister_code16(KC_F20);
+        }
+      }
+      break;
+
+  }// Einde switch
+
   return true;
 }
 
-void post_process_record_user(uint16_t keycode, keyrecord_t *record) {
-  //if (record->event.pressed && glb_currently_latent && keycode != osGLB) {
-  if (record->event.pressed && keycode != osGLB) {
-    if (glb_sent && !glb_down) {
-      host_consumer_send(0);
-      glb_sent = false;
-    } else {
-    }
-  }
-
+void matrix_scan_user(void) {
+  flow_matrix_scan();
 }
-
-void matrix_scan_user(void) { // The very important timer.
-  if (glb_tapping_term) {
-    //if (timer_elapsed(glb_timer) > 500) {
-    if (timer_elapsed(glb_timer) > 1.5 * TAPPING_TERM) {
-      glb_tapping_term = false;
-      if (glb_down) {
-        if (glb_sent) {
-          host_consumer_send(0);
-        } else {
-        }
-        host_consumer_send(0x029D);
-        host_consumer_send(0);
-        if (glb_subsequent_press) {
-          host_consumer_send(0x029D);
-          host_consumer_send(0);
-        }
-        glb_sent = false;
-      }
-      glb_subsequent_press = false;
-    }
-  }
-}
-
-
-  //case osGLB:
-    //if (record->event.pressed) {    // PRESS
-    //  host_consumer_send(0);
-    //  if (glb_tapping_term) {
-    //    glb_tapping_term--;
-    //    glb_double_pressed++;
-    //  } else {
-    //    glb_tapping_term++;
-    //  }
-    //  if (record->tap.count) {          // <TERM
-    //  } else {                          // >TERM
-    //    if (glb_double_pressed) {
-    //      glb_double_pressed--;
-    //      glb_dictate++;
-    //      host_consumer_send(0x029D);
-    //      host_consumer_send(0);
-    //      host_consumer_send(0x029D);
-    //    } else {
-    //      host_consumer_send(0x029D);
-    //      host_consumer_send(0);
-    //    }
-    //  }
-    //// POST
-    //} else {                        // RELEASE
-    //  if (glb_dictate) {
-    //    glb_dictate--;
-    //    host_consumer_send(0);
-    //  }
-    //  if (glb_tapping_term) {
-    //    glb_currently_latent++;
-    //    host_consumer_send(0x029D);
-    //  }
-    //  if (record->tap.count) {          // <TERM
-    //  } else {                          // >TERM
-    //  }
-    //}
-    //break;
-    //
-
-  //case KC_A ... KC_EXSL:
-  //  if (record->event.pressed) {
-  //    if (glb_currently_latent) {
-  //      host_consumer_send(0x029D);
-  //    }
-  //    register_code(keycode);
-  //  } else {
-  //    unregister_code(keycode);
-  //    if (glb_currently_latent) {
-  //      glb_currently_latent--;
-  //      host_consumer_send(0);
-  //    }
-  //  }
-  //  break;
