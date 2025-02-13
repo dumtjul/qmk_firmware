@@ -1,3 +1,1 @@
 KEYBOARD_SHARED_EP = yes
-CAPS_WORD_ENABLE = yes
-SRC += flow.c

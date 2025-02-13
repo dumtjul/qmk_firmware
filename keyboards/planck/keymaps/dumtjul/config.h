@@ -15,11 +15,6 @@
  */
 
 #pragma once
-#define HOLD_ON_OTHER_KEY_PRESS
-#define ONESHOT_TIMEOUT 60000
-#define TAPPING_TERM 270
-#define CAPS_WORD_IDLE_TIMEOUT 0  // No timeout
-#define FLOW_COUNT 4
 
 //#define USB_MAX_POWER_CONSUMPTION 100
 //#define COMBO_NO_TIMER
